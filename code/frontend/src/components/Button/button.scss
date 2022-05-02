@@ -1,0 +1,51 @@
+.button {
+  background: #2762FC;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 16px 20px;
+  text-decoration: none;
+  transition: all .3s ease;
+
+  &:hover {
+    background: #366efc;
+  }
+
+  &--short {
+    padding: 12px 18px;
+  }
+
+  &--green {
+    background: #03BC63;
+
+    &:hover {
+      background: #10da78;
+    }
+  }
+
+  &--red {
+    background: #FB4438;
+
+    &:hover {
+      background: #fe584c;
+    }
+  }
+
+  &--pending {
+    background: #B5B5B5;
+    pointer-events: none;
+
+    &:hover {
+      background: #B5B5B5;
+    }
+  }
+
+  &--disabled {
+    background: none;
+    color: #434343;
+    pointer-events: none;
+  }
+}

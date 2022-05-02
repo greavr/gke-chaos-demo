@@ -16,6 +16,24 @@ Run the following command
 deactivate
 ```
 
+### Run Frontend Locally ([node](https://nodejs.org/en/) needs to be installed)
+```
+cd code/frontend
+npm install
+npm run start
+```
+Then front end will be served [locally](http://localhost:3000)(port 3000) and able to talk to backend(port 8080) over proxy.<br /><br />
+
+## Before Deployment
+### Build Frontend
+```
+cd code/frontend
+npm install
+npm run build
+```
+A /build folder will be built in 'frontend' and served by Flask as static folder.<br /><br />
+
+
 ## Config
 Config is either via local file [config.json](code/config.json) or recreating with environmental variables:<br />
 **EXAMPLE:**
@@ -26,4 +44,14 @@ DASHBOARD_URL='https://dashboardurl.com'
 SITE_URLS=['https://sitehomepage.com/','https://sitehomepage.com/cart','https://sitehomepage.com/product/123']
 LOAD_TEST_URL='https://sitehomepage.com'
 LOAD_TEST_USER_BUMP=50
+```
+
+## Deploying
+```
+gcloud builds submit
+```
+Or
+```
+docker build -t gcr.io/{GCP_PROJECT}/chaos-demo
+docker push gcr.io/{GCP_PROJECT}/chaos-demo
 ```

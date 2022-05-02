@@ -1,0 +1,26 @@
+.header {
+  align-items: center;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  padding: 28px 40px;
+
+  .title {
+    align-items: center;
+    display: flex;
+    font-size: 24px;
+    font-weight: 500;
+
+    &_logo img {
+      height: 30px;
+    }
+
+    &_title {
+      margin-left: 20px;
+    }
+  }
+
+  .info {
+    color: #9C9C9C;
+  }
+}

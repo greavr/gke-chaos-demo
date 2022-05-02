@@ -8,7 +8,7 @@ from handlers.loadgen import loadgen
 import config
 
 ## Config App
-app = Flask(__name__)
+app = Flask(__name__, static_folder="frontend/build/static", template_folder="frontend/build")
 
 
 ## Default App Hosting

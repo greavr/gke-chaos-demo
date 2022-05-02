@@ -1,0 +1,33 @@
+.load-generator {
+  margin-top: 50px;
+  text-align: left;
+
+  &__title {
+    font-size: 26px;
+    font-weight: 500;
+  }
+
+  &__inner {
+    background: white;
+    border-radius: 8px;
+    margin-top: 20px;
+    padding-top: 30px;
+  }
+
+  &__load-info {
+    align-items: end;
+    display: flex;
+    margin: 0 0 0 30px;
+
+    .info {
+      margin-left: 40px;
+
+      .load {
+        font-size: 48px;
+        font-weight: 500;
+        line-height: 0;
+        margin-left: 4px;
+      }
+    }
+  }
+}

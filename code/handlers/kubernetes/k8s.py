@@ -2,6 +2,10 @@ from kubernetes import client
 from handlers.gcp import gcp
 import config as config
 
+## Quiten TLS notifications
+import urllib3
+urllib3.disable_warnings()
+
 ## Get Kubernetes creds
 def GetKubernetesCreds(location: str, name: str):
     # Returns Configuration set for Kubernetes Cluster
@@ -21,6 +25,19 @@ def GetKubernetesCreds(location: str, name: str):
 
     return configuration
 
+## Flatter Lists
+def flatten_list(_2d_list):
+    flat_list = []
+    # Iterate through the outer list
+    for element in _2d_list:
+        if type(element) is list:
+            # If the element is of type list, iterate through the sublist
+            for item in element:
+                flat_list.append(item)
+        else:
+            flat_list.append(element)
+    return flat_list
+
 ## Get GKE Services
 def GetServices(namespace_filter:str, credentials):
     # Get list of services in namespace
@@ -34,7 +51,7 @@ def GetServices(namespace_filter:str, credentials):
         services = v1.list_service_for_all_namespaces(watch=False)
         for aService in services.items:
             if aService.metadata.namespace == namespace_filter:
-                print(aService.metadata.name)
+                #print(aService.metadata.name)
                 service_list.append(aService.metadata.name)
     except Exception as e:
         print(e)
@@ -48,7 +65,7 @@ def GetPods(service: str, cluster_name: str, cluster_location: str,  namespace_f
     client.Configuration.set_default(credentials)
     v1 = client.CoreV1Api()
     try: 
-        print(f"Getting Pods in the follwing service list {service}, from the {cluster_name} in the {namespace_filter} namespace")
+        # print(f"Getting Pods in the follwing service list {service}, from the {cluster_name} in the {namespace_filter} namespace")
         # Filter by service
         label_selector = f"app = {service}"
         pods = v1.list_namespaced_pod(namespace_filter,label_selector=label_selector)
@@ -57,7 +74,8 @@ def GetPods(service: str, cluster_name: str, cluster_location: str,  namespace_f
             pod_results.append({'name':i.metadata.name,'cluster':cluster_name,'zone':cluster_location,'status':i.status.phase})
     
     except Exception as e:
-        print (e)
+        print (f"Unable to get the status of the {service} service, in {cluster_name}, {cluster_location}, in the ns {namespace_filter}")
+        print(e)
 
     # Return results
     return pod_results
@@ -69,7 +87,7 @@ def CreatePodList(namespace: str = "hipster" ):
     for aCluster in config.gke_clusters:
         cluster_name = aCluster[0]
         cluster_location = aCluster[1]
-        print(f"Cluster: {cluster_name}, located: {cluster_location}")
+        # print(f"Cluster: {cluster_name}, located: {cluster_location}")
 
         this_client = GetKubernetesCreds(location=cluster_location,name=cluster_name)
 
@@ -81,6 +99,8 @@ def CreatePodList(namespace: str = "hipster" ):
             found_pods = GetPods(cluster_name=cluster_name, cluster_location=cluster_location, service=aService, namespace_filter=namespace, credentials=this_client)
             if found_pods != []:
                 pod_results.append(found_pods)
+
+    pod_results = flatten_list(pod_results)
 
     # Return results
     return pod_results

@@ -1,0 +1,53 @@
+.live-site {
+  height: 100%;
+  text-align: left;
+
+  .title {
+    font-size: 26px;
+    font-weight: 500;
+  }
+
+  &__inner {
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    height: calc(100% - 130px);
+    margin: 20px 40px 0 0;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+
+    .loading {
+      position: absolute;
+      text-align: center;
+  
+      img {
+        height: 50px;
+        width: 50px;
+      }
+  
+      .text {
+        color: #BEBEBE;
+        font-weight: 500;
+        margin-top: 15px;
+      }
+  
+      &--hidden {
+        display: none;
+      }
+    }
+  
+    .iframe {
+      height: 100%;
+      opacity: 0;
+      width: 100%;
+      // overflow-y: auto;
+      transition: all .4s linear;
+  
+      &--visible {
+        opacity: 1;
+      }
+    }
+  }
+}

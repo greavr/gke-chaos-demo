@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+.App {
+  background: #E6E8EC;
+  color: #434343;
+  font-family: 'Roboto', sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  text-align: center;
+
+  .main {
+    display: flex;
+    height: 100%;
+    width: 100%;
+
+    &-left {
+      overflow: scroll;
+      padding: 40px 0 40px 40px;
+      width: 60%;
+    }
+
+    &-right {
+      height: calc(100vh - 100px);
+      overflow: hidden;
+      padding: 40px 0 40px 40px;
+      width: 40%;
+    }
+  }
+}
