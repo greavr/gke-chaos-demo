@@ -62,7 +62,31 @@ def removeinstance():
 @app.route("/list-pods", methods=['GET'])
 def list_pods():
     # API End Point for get all instances
-    result = k8s.CreatePodList()
+    # result = k8s.CreatePodList()
+    result = [
+        {'name':'adservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
+        {'name':'cartservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
+        {'name':'checkoutservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
+        {'name':'currencyservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
+        {'name':'emailservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
+        {'name':'frontend','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
+        {'name':'paymentservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
+        {'name':'productcatalogservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
+        {'name':'recommendationservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
+        {'name':'redis-cart','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
+        {'name':'shippingservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
+        {'name':'adservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
+        {'name':'cartservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
+        {'name':'checkoutservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
+        {'name':'currencyservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
+        {'name':'emailservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
+        {'name':'frontend','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
+        {'name':'paymentservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
+        {'name':'productcatalogservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
+        {'name':'recommendationservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
+        {'name':'redis-cart','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
+        {'name':'shippingservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'}
+        ]
 
     # Validate result
     if len(result) > 0:
