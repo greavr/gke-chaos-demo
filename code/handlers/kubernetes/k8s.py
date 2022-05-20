@@ -1,6 +1,7 @@
 from kubernetes import client
 from handlers.gcp import gcp
 import config as config
+import datetime
 
 ## Quiten TLS notifications
 import urllib3
@@ -82,6 +83,13 @@ def GetPods(service: str, cluster_name: str, cluster_location: str,  namespace_f
 
 def CreatePodList(namespace: str = "hipster" ):
     # Function to get a list of all pods in all services inside a namespace
+
+    # Check cache 
+    elapsed = datetime.datetime.now() - config.PodCacheLastUpdated
+    if ((config.PodCacheList != []) and (elapsed < datetime.timedelta(seconds=config.cachetime))):
+        print (f"Using cache from {config.PodCacheLastUpdated}")
+        return config.PodCacheList
+
     pod_results = []
     ## Itterate over clusters
     for aCluster in config.gke_clusters:
@@ -101,6 +109,8 @@ def CreatePodList(namespace: str = "hipster" ):
                 pod_results.append(found_pods)
 
     pod_results = flatten_list(pod_results)
+    config.PodCacheList = pod_results
+    config.PodCacheLastUpdated = datetime.datetime.now()
 
     # Return results
     return pod_results

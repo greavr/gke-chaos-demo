@@ -44,6 +44,7 @@ DASHBOARD_URL='https://dashboardurl.com'
 SITE_URLS=['https://sitehomepage.com/','https://sitehomepage.com/cart','https://sitehomepage.com/product/123']
 LOAD_TEST_URL='https://sitehomepage.com'
 LOAD_TEST_USER_BUMP=50
+CACHE_TIMEOUT=30
 ```
 
 ## Deploying

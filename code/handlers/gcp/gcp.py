@@ -3,8 +3,8 @@ from google.cloud import container_v1
 from oauth2client.client import GoogleCredentials
 import google.auth.transport.requests
 import google.cloud.logging
-import requests
 import config
+import datetime
 
 def configure_gcp():
     # Build Credentials
@@ -18,6 +18,13 @@ def configure_gcp():
 ## List GCE Instances
 def GetInstances():
     # This Function creates a list of instances per GKE cluster and returns them as a nested array
+    # Check cache 
+    elapsed = datetime.datetime.now() - config.InstanceCacheLastUpdated
+    if ((config.InstanceCacheList != []) and (elapsed < datetime.timedelta(seconds=config.cachetime))):
+        print (f"Using cache from {config.InstanceCacheLastUpdated}")
+        return config.InstanceCacheList
+
+    # Build Client
     instance_client = compute_v1.InstancesClient()
     request = compute_v1.AggregatedListInstancesRequest()
     request.project = config.gcp_project
@@ -34,6 +41,9 @@ def GetInstances():
 
                 thisStatus = [char for char in str(instance.status) if char.isupper()]
                 all_instances.append({'zone':thisZone,'name':instance.name,'status':''.join(thisStatus)})
+
+    config.InstanceCacheList = all_instances
+    config.InstanceCacheLastUpdated = datetime.datetime.now()
 
     return all_instances
 

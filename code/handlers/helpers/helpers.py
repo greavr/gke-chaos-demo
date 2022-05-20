@@ -1,5 +1,6 @@
 import json
 import config as config
+import datetime
 import os
 
 
@@ -18,6 +19,9 @@ def GetConfig():
         config.site_urls = os.environ.get('SITE_URLS', data['site-urls'])
         config.load_test_url = os.environ.get('LOAD_TEST_URL', data['load-test-url'])
         config.load_test_user_bump = os.environ.get('LOAD_TEST_USER_BUMP', data['load-test-user-bump'])
+        config.cachetime = os.environ.get('CACHE_TIMEOUT', data['cache-timeout'])
+        config.InstanceCacheLastUpdated = datetime.datetime.now()
+        config.PodCacheLastUpdated = datetime.datetime.now()
     except Exception as e:
         # Unable to load file, quit
         print(e)

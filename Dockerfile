@@ -13,7 +13,7 @@ RUN apt-get update -y
 RUN apt-get install -y python3-pip python3-dev
 
 COPY /code /app
-COPY --from=build /my-app/build /app/frontend/build
+COPY --from=build /my-app/build /app/frontend
 
 WORKDIR /app
 RUN pip3 install -r requirements.txt
