@@ -72,20 +72,7 @@ def list_pods():
         {'name':'frontend','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
         {'name':'paymentservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
         {'name':'productcatalogservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'recommendationservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'redis-cart','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'shippingservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'adservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
-        {'name':'cartservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
-        {'name':'checkoutservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
-        {'name':'currencyservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
-        {'name':'emailservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
-        {'name':'frontend','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
-        {'name':'paymentservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
-        {'name':'productcatalogservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
-        {'name':'recommendationservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
-        {'name':'redis-cart','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'},
-        {'name':'shippingservice','cluster':'chaos-us-east1','zone':'us-east1-a','status':'ready'}
+        {'name':'recommendationservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'}
         ]
 
     # Validate result
