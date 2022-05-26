@@ -26,7 +26,12 @@ const ChaosMode = () => {
   // fetch services and nodes data at load
   useEffect(() => {
     getAllData();
-  }, [servicesData, nodesData])
+
+    //  Update data every 3 seconds
+    setInterval(() => {
+      getAllData();
+    }, 3000);
+  }, [])
 
   // Get all services and nodes data
   const getAllData = () => {
@@ -48,7 +53,10 @@ const ChaosMode = () => {
     axios.get('/list-instances')
     .then(function (response) {
       // handle success
-      setNodesData(response.data.instances.sort(getSortOrder("zone")));
+      const rawDataArr = response.data.instances
+      // Convert zones to regions
+      const sortedData = [...new Map(rawDataArr.map(item => [item.zone, item])).values()].sort(getSortOrder("zone"));
+      setNodesData(sortedData);
     })
   }
 
@@ -58,7 +66,7 @@ const ChaosMode = () => {
       <div className='chaos-mode__inner'>
         {/* Service columns */}
         <div className='services'>
-          <div className='services__title'>Services:<span>Active: ({servicesData.filter(x => x.status === ('Running' || 'RUNNING')).length}/{servicesData.length})</span></div>
+          <div className='services__title'>Services:<span>Active: ({servicesData.filter(x => x.status === ('ready')).length}/{servicesData.length})</span></div>
           <div className='services__content'>
             {/* Render all service rows here */}
             {
@@ -118,13 +126,13 @@ const ServiceRow = ({service}) => {
 
   return (
     service ? (
-      <div className={`service ${service.status === 'Running' ? 'service--running' : 'service--down'}`} key={service.name}>
+      <div className={`service ${service.status === 'ready' ? 'service--running' : 'service--down'}`} key={service.name}>
         <div className='service__name'>{service.name.replace(/\-.*/,'').charAt(0).toUpperCase() + service.name.replace(/\-.*/,'').slice(1)}</div>
         <div className='service__status'>Status: <span className='dot'></span></div>
         <Button
           text='Terminate'
           short='true'
-          type={service.status === 'Running' ? 'red' : 'green'}
+          type={service.status === 'ready' ? 'red' : 'green'}
           handleClick={() => handleServiceLife(service)}
           isPending={isPending}
         />

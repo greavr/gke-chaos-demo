@@ -7,7 +7,7 @@ import os
 ## Helper functions
 def GetConfig():
     # Function to Open config.json file and load values
-    config_file = "config.json"
+    config_file = "code/config.json"
     try:
         # Read file
         f = open(config_file)
