@@ -12,6 +12,7 @@
     border-radius: 8px;
     margin-top: 20px;
     padding-top: 30px;
+    position: relative;
   }
 
   &__load-info {
@@ -20,7 +21,8 @@
     margin: 0 0 0 30px;
 
     .info {
-      margin-left: 40px;
+      left: 220px;
+      position: absolute;
 
       .load {
         font-size: 48px;

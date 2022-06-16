@@ -8,6 +8,7 @@ const today = new Date();
 
 const LoadGenerator = () => {
   // Variables
+  const [buttonPending, setButtonPending] = useState(false);
   const [currentLoad, setCurrentLoad] = useState(100);
   const [chartData, setChartData] = useState([100]);
   const [chartTime, setChartTime] = useState([today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds()]);
@@ -21,10 +22,14 @@ const LoadGenerator = () => {
 
   // Handle generate load
   const handleGenerateLoad = () => {
+    // Disable button click while processing
+    setButtonPending(true);
     axios.get('/increase-load')
-    .then(response => {
+    .then(() => {
       // Handle success
-      console.log('kk')
+      // Get button back to active
+      setButtonPending(false);
+      // Get and display current load
       handleGetLoad();
     })
   }
@@ -49,7 +54,8 @@ const LoadGenerator = () => {
         <div className='load-generator__load-info'>
           <Button
             className='button'
-            text='Generate Load'
+            text={buttonPending ? 'Generating load...' : 'Generate Load'}
+            isPending={buttonPending}
             handleClick={handleGenerateLoad}
           />
           <div className='info'><span>Current Load:</span><span className='load'>{currentLoad}</span></div>
