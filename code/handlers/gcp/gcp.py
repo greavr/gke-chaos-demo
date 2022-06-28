@@ -1,5 +1,5 @@
-from unittest import result
-from urllib import response
+from re import X
+from google.cloud import gkehub_v1
 from google.cloud import compute_v1
 from google.cloud import container_v1
 from oauth2client.client import GoogleCredentials
@@ -66,22 +66,37 @@ def GetClusterList():
     # Build Client
     all_clusters = []
     try:
-        client = container_v1.ClusterManagerClient()
+         # Create a client
+        client = gkehub_v1.GkeHubClient()
 
         # Initialize request argument(s)
-        request = container_v1.ListClustersRequest()
-        request.parent = f"projects/{config.gcp_project}/locations/-"
+        request = gkehub_v1.ListMembershipsRequest(
+            parent=f"projects/{config.gcp_project}/locations/-",
+        )
 
         # Make the request
-        response = client.list_clusters(request=request)
-
-        for aCluster in response.clusters:   
-            thisCluster = {'cluster_name' : aCluster.name, 'location': aCluster.location, 'node-count': aCluster.current_node_count}
-
-            all_clusters.append(thisCluster)
+        page_result = client.list_memberships(request=request)
 
         # Handle the response
-        print(response)
+        for response in page_result:
+    
+            # Check if gke cluster
+            if response.endpoint.gke_cluster.resource_link:
+                cluster_name = response.endpoint.gke_cluster.resource_link.split("/")[-1]
+                cluster_location = response.endpoint.gke_cluster.resource_link.split("/")[-3]
+                cluster_type = "gke"
+            else:
+                cluster_name = response.name.split("/")[-1]
+                cluster_location = response.name.split("/")[-3]
+                cluster_type = response.endpoint.kubernetes_metadata.node_provider_id
+
+            cluster_node_count = response.endpoint.kubernetes_metadata.node_count
+            
+            aCluster = {'cluster-name' : cluster_name, 'location': cluster_location, 'node-count': cluster_node_count, 'cluster-type': cluster_type}
+            all_clusters.append(aCluster)
+
+
+        # Handle the response
         config.ClusterCacheList = all_clusters
         config.ClusterCacheLastUpdated = datetime.datetime.now()
     except Exception as e:
