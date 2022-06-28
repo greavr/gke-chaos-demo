@@ -183,5 +183,5 @@ if __name__ == "__main__":
     gcp.configure_gcp()
     helpers.GetConfig()
     ## Run APP
-    #app.run(host='0.0.0.0', port=8080, debug=True)
-    gcp.KillServerInCluster(cluster_name="chaos-us-west1",region="us-west1")
+    app.run(host='0.0.0.0', port=8080, debug=True)
+    #gcp.KillServerInCluster(cluster_name="chaos-us-west1",region="us-west1")
