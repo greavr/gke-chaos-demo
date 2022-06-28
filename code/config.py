@@ -12,3 +12,7 @@ InstanceCacheList = []
 InstanceCacheLastUpdated = ""
 PodCacheList = []
 PodCacheLastUpdated = ""
+ClusterCacheList = []
+ClusterCacheLastUpdated = ""
+ServiceCacheList = []
+ServiceListLastUpdated = ""

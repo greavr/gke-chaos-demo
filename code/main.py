@@ -115,9 +115,73 @@ def current_load():
     else:
         return json.dumps({'success':False}), 400, {'ContentType':'application/json'} 
 
+## Get Cluster Lists
+@app.route("/v2/get-clusters", methods=['GET'])
+def get_clusters():
+    """ Return json list of kubernetes clusters registered in Athos"""
+    " Sample return structure TYPE: JSON"
+    " Nested array under 'instances'"
+    " cluster_name: Friend cluster name (str)"
+    " location: Region of Cluser (str)"
+    " node-count: How many instances in cluster (int 0-100)"
+
+    # API End Point for get all instances
+    result = gcp.GetClusterList()
+
+    # Validate result
+    if len(result) > 0:
+        return json.dumps({'success':True, 'instances':result}), 201, {'ContentType':'application/json'} 
+    else:
+        return json.dumps({'success':False}), 400, {'ContentType':'application/json'} 
+
+## Remove random instance from cluster
+@app.route("/v2/remove-from-cluster", methods=['POST'])
+def remove_from_cluster():
+    """Function to remove a random GCE instance from cluster."""
+    " Return is boolean for success "
+    " Required parameters: gke_cluster (Friendly string name)"
+    " gke_region (string region name"
+
+    cluster = request.form['gke_cluster']
+    region = request.form['gke_region']
+
+    result = gcp.KillServerInCluster(cluster_name=cluster,region=region)
+
+    if result:
+        return json.dumps({'success':True}), 201, {'ContentType':'application/json'} 
+    else:
+        return json.dumps({'success':False}), 400, {'ContentType':'application/json'} 
+
+## List Services
+@app.route("/v2/list-services", methods=['GET'])
+def list_services():
+    """ Pull condensed list of services"""
+    result = k8s.Create_Service_List()
+    # Validate result
+    if len(result) > 0:
+        return json.dumps({'success':True, 'pods':result}), 201, {'ContentType':'application/json'} 
+    else:
+        return json.dumps({'success':False}), 400, {'ContentType':'application/json'} 
+
+
+## Remove random pod from service
+@app.route("/v2/kill-pod", methods=['POST'])
+def remove_random_pod():
+    """ Remove random pod from service on random machine"""
+
+    service = request.form['service']
+
+    result = k8s.kill_random_pod(service_name=service)
+
+    if result:
+        return json.dumps({'success':True}), 201, {'ContentType':'application/json'} 
+    else:
+        return json.dumps({'success':False}), 400, {'ContentType':'application/json'} 
+
 if __name__ == "__main__":
     ## Setup APP
     gcp.configure_gcp()
     helpers.GetConfig()
     ## Run APP
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    #app.run(host='0.0.0.0', port=8080, debug=True)
+    gcp.KillServerInCluster(cluster_name="chaos-us-west1",region="us-west1")

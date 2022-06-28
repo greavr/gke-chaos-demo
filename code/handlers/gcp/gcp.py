@@ -1,10 +1,15 @@
+from unittest import result
+from urllib import response
 from google.cloud import compute_v1
 from google.cloud import container_v1
 from oauth2client.client import GoogleCredentials
 import google.auth.transport.requests
 import google.cloud.logging
+from requests import request
 import config
 import datetime
+from urllib.parse import urlparse
+import random
 
 def configure_gcp():
     # Build Credentials
@@ -25,53 +30,152 @@ def GetInstances():
         return config.InstanceCacheList
 
     # Build Client
-    instance_client = compute_v1.InstancesClient()
-    request = compute_v1.AggregatedListInstancesRequest()
-    request.project = config.gcp_project
-
-    agg_list = instance_client.aggregated_list(request=request)
-
     all_instances = []
+    try:
+        instance_client = compute_v1.InstancesClient()
+        request = compute_v1.AggregatedListInstancesRequest()
+        request.project = config.gcp_project
 
-    # Format the return
-    for zone, response in agg_list:
-        if response.instances:
-            for instance in response.instances:
-                thisZone = str(instance.zone).rsplit('/', 1)[-1]
+        agg_list = instance_client.aggregated_list(request=request)
 
-                thisStatus = [char for char in str(instance.status) if char.isupper()]
-                all_instances.append({'zone':thisZone,'name':instance.name,'status':''.join(thisStatus)})
+        # Format the return
+        for zone, response in agg_list:
+            if response.instances:
+                for instance in response.instances:
+                    thisZone = str(instance.zone).rsplit('/', 1)[-1]
 
-    config.InstanceCacheList = all_instances
-    config.InstanceCacheLastUpdated = datetime.datetime.now()
+                    thisStatus = [char for char in str(instance.status) if char.isupper()]
+                    all_instances.append({'zone':thisZone,'name':instance.name,'status':''.join(thisStatus)})
+
+        config.InstanceCacheList = all_instances
+        config.InstanceCacheLastUpdated = datetime.datetime.now()
+    except Exception as e:
+        print(e)
 
     return all_instances
+
+## List Anthos GKE Clusters
+def GetClusterList():
+    """Return list of kubernetes clusters registered in Anthos. Returns Array of cluster and instances"""
+    # Check Cache result
+    elapsed = datetime.datetime.now() - config.ClusterCacheLastUpdated
+    if ((config.ClusterCacheLastUpdated != []) and (elapsed < datetime.timedelta(seconds=config.cachetime))):
+        print (f"Using Cluster cache from {config.ClusterCacheLastUpdated}")
+        return config.ClusterCacheList
+
+    # Build Client
+    all_clusters = []
+    try:
+        client = container_v1.ClusterManagerClient()
+
+        # Initialize request argument(s)
+        request = container_v1.ListClustersRequest()
+        request.parent = f"projects/{config.gcp_project}/locations/-"
+
+        # Make the request
+        response = client.list_clusters(request=request)
+
+        for aCluster in response.clusters:   
+            thisCluster = {'cluster_name' : aCluster.name, 'location': aCluster.location, 'node-count': aCluster.current_node_count}
+
+            all_clusters.append(thisCluster)
+
+        # Handle the response
+        print(response)
+        config.ClusterCacheList = all_clusters
+        config.ClusterCacheLastUpdated = datetime.datetime.now()
+    except Exception as e:
+        print(e)
+
+    return all_clusters
 
 ## Kill GCE Instance
 def KillInstance(instance_name,instance_zone):
     # This function removes a specific instance
-    instance_client = compute_v1.InstancesClient()
-    operation_client = compute_v1.ZoneOperationsClient()
+    try:
+        instance_client = compute_v1.InstancesClient()
+        operation_client = compute_v1.ZoneOperationsClient()
 
-    print(f"Deleting {instance_name} from {instance_zone}...")
+        print(f"Deleting {instance_name} from {instance_zone}...")
 
-    operation = instance_client.delete_unary(
-        project=config.gcp_project, zone=instance_zone, instance=instance_name
-    )
-
-    while operation.status != compute_v1.Operation.Status.DONE:
-        operation = operation_client.wait(
-            operation=operation.name, zone=instance_zone, project=config.gcp_project
+        operation = instance_client.delete_unary(
+            project=config.gcp_project, zone=instance_zone, instance=instance_name
         )
 
-    if operation.error:
-        print("Error during deletion:", operation.error)
-        return False
-    if operation.warnings:
-        print("Warning during deletion:", operation.warnings)
-    print(f"Instance {instance_name} deleted.")
+        while operation.status != compute_v1.Operation.Status.DONE:
+            operation = operation_client.wait(
+                operation=operation.name, zone=instance_zone, project=config.gcp_project
+            )
 
-    return True
+        if operation.error:
+            print("Error during deletion:", operation.error)
+            return False
+        if operation.warnings:
+            print("Warning during deletion:", operation.warnings)
+        print(f"Instance {instance_name} deleted.")
+
+        return True
+    except Exception as e:
+        print(e)
+
+    return False
+
+## Kill Instance in Cluster
+def KillServerInCluster(cluster_name,region):
+    """Lookup the cluster and pass that instance to KillInstance Function"""
+    # This function lookups the cluster and picks a random instance to kill
+    result = False
+    try:
+        # Lookup Cluster
+        client = container_v1.ClusterManagerClient()
+
+        request = container_v1.ListNodePoolsRequest()
+        request.parent = f"projects/{config.gcp_project}/locations/{region}/clusters/{cluster_name}"
+
+        # Make the request
+        response = client.list_node_pools(request=request)
+
+        # Get instance group names
+        node_pool_list = []
+        for aPool in response.node_pools:
+            for aGroup in aPool.instance_group_urls:
+                thisGroup = urlparse(aGroup).path.split('/')[-1]
+                thisZone = urlparse(aGroup).path.split('/')[-3]
+                aPool = {"group_name": thisGroup,"group_zone": thisZone}
+                node_pool_list.append(aPool)
+                
+        # Pick Random instance group and pass to List_InstanceGroup_Instances
+        random_ig = random.choice(node_pool_list)
+        choosen_instance = List_InstanceGroup_Instances(instance_group_name=random_ig["group_name"], instance_group_location=random_ig["group_zone"])
+
+        # Kill Instance
+        result = KillInstance(instance_name=choosen_instance["instance_name"],instance_zone=choosen_instance["instance_zone"])
+        
+    except Exception as e:
+        print(e)
+
+    return result
+    
+## List instances in Instance Group
+def List_InstanceGroup_Instances(instance_group_name, instance_group_location):
+    """This function returns a list of instances found in a instance group, returns a random machine name and zone"""
+    result = {}
+    try:
+        print(f"{instance_group_name} - {instance_group_location}")
+        instance_group_client = compute_v1.InstanceGroupsClient()
+        request = compute_v1.ListInstancesInstanceGroupsRequest()
+        request.project = config.gcp_project
+        request.zone = instance_group_location
+        request.instance_group = instance_group_name   
+
+        response = instance_group_client.list_instances(request=request)
+
+        print (response)
+
+    except Exception as e:
+        print(e)
+
+    return result
 
 ## Get GKE Creds
 def GetGKECreds():

@@ -7,7 +7,8 @@ import os
 ## Helper functions
 def GetConfig():
     # Function to Open config.json file and load values
-    config_file = "code/config.json"
+    dirname = os.path.dirname(__file__)
+    config_file = os.path.join(dirname, '../../config.json')
     try:
         # Read file
         f = open(config_file)
@@ -22,6 +23,8 @@ def GetConfig():
         config.cachetime = os.environ.get('CACHE_TIMEOUT', data['cache-timeout'])
         config.InstanceCacheLastUpdated = datetime.datetime.now()
         config.PodCacheLastUpdated = datetime.datetime.now()
+        config.ClusterCacheLastUpdated = datetime.datetime.now()
+        config.ServiceListLastUpdated = datetime.datetime.now()
     except Exception as e:
         # Unable to load file, quit
         print(e)
