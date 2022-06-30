@@ -53,6 +53,7 @@ gcloud builds submit
 ```
 Or
 ```
-docker build -t gcr.io/{GCP_PROJECT}/chaos-demo
-docker push gcr.io/{GCP_PROJECT}/chaos-demo
+CLOUD_PROJECT_ID=$(gcloud config get-value project)
+docker build -t gcr.io/$CLOUD_PROJECT_ID/chaos-demo .
+docker push gcr.io/$CLOUD_PROJECT_ID/chaos-demo
 ```

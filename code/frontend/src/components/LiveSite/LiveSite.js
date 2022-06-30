@@ -11,11 +11,11 @@ const LiveSite = () => {
   useEffect(() => {
     setInterval(() => {
       rotateIframeURL();
-    }, 2000);
+    }, 5000);
   }, []);
 
   useEffect(() => {
-    // console.log(iframeURL)
+    console.log(iframeURL)
   }, [iframeURL]);
 
   const rotateIframeURL = () => {
