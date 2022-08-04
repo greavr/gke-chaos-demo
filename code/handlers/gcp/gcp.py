@@ -1,4 +1,3 @@
-from re import X
 from google.cloud import gkehub_v1
 from google.cloud import compute_v1
 from google.cloud import container_v1

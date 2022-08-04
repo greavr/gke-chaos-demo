@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import random
 from kubernetes import client
 from handlers.gcp import gcp
@@ -177,9 +176,13 @@ def Create_Service_List(namespace: str = "hipster"):
 
     try:
         # Itterate over each server
-        for aCluster in config.gke_clusters:
-            cluster_name = aCluster[0]
-            cluster_location = aCluster[1]
+        for aCluster in config.ClusterCacheList:
+            #  Only Scrape GKE Clusters
+            if aCluster["cluster-type"] != "gke":
+                continue
+
+            cluster_name = aCluster["cluster-name"]
+            cluster_location = aCluster["location"]
 
             this_client = GetKubernetesCreds(location=cluster_location,name=cluster_name)
 

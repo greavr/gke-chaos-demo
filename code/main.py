@@ -1,5 +1,4 @@
-from crypt import methods
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request
 import json
 from handlers.helpers import helpers
 from handlers.gcp import gcp
@@ -9,7 +8,6 @@ import config
 
 ## Config App
 app = Flask(__name__, static_folder="frontend/build/static", template_folder="frontend/build")
-
 
 ## Default App Hosting
 @app.route("/", methods=['GET'])
@@ -159,10 +157,9 @@ def list_services():
     result = k8s.Create_Service_List()
     # Validate result
     if len(result) > 0:
-        return json.dumps({'success':True, 'pods':result}), 201, {'ContentType':'application/json'} 
+        return json.dumps({'success':True, 'services':result}), 201, {'ContentType':'application/json'} 
     else:
         return json.dumps({'success':False}), 400, {'ContentType':'application/json'} 
-
 
 ## Remove random pod from service
 @app.route("/v2/kill-pod", methods=['POST'])
