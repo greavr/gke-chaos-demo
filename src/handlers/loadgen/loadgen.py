@@ -3,6 +3,7 @@ import requests
 import time
 import config
 import random
+import logging
 
 ## Add Load Function
 def AddLoad():
@@ -12,7 +13,7 @@ def AddLoad():
             x = threading.Thread( target=make_request, args=(i,))
             x.start()
     except:
-        print(f"Error: unable to start thread")
+        logging.error(f"Error: unable to start thread")
         return False
 
     #All Good

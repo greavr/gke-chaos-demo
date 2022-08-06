@@ -1,6 +1,5 @@
 # Application Variables
 gcp_project = ""
-gke_clusters = {}
 dashboard_url = ""
 site_urls = []
 current_load = 100
@@ -16,3 +15,4 @@ ClusterCacheList = []
 ClusterCacheLastUpdated = ""
 ServiceCacheList = []
 ServiceListLastUpdated = ""
+local_debug = True

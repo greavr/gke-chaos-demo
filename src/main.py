@@ -1,3 +1,6 @@
+from asyncio.log import logger
+import logging
+import re
 from flask import Flask, render_template, request
 import json
 from handlers.helpers import helpers
@@ -114,7 +117,7 @@ def current_load():
         return json.dumps({'success':False}), 400, {'ContentType':'application/json'} 
 
 ## Get Cluster Lists
-@app.route("/v2/get-clusters", methods=['GET'])
+@app.route("/v2/list-clusters", methods=['GET'])
 def get_clusters():
     """ Return json list of kubernetes clusters registered in Athos"""
     " Sample return structure TYPE: JSON"
@@ -133,22 +136,32 @@ def get_clusters():
         return json.dumps({'success':False}), 400, {'ContentType':'application/json'} 
 
 ## Remove random instance from cluster
-@app.route("/v2/remove-from-cluster", methods=['POST'])
+@app.route("/v2/kill-instance", methods=['POST'])
 def remove_from_cluster():
-    """Function to remove a random GCE instance from cluster."""
-    " Return is boolean for success "
-    " Required parameters: gke_cluster (Friendly string name)"
-    " gke_region (string region name"
+    """Function to remove a random GCE instance from cluster.
+    Return is boolean for success
+    Required parameters:
+    - gke_cluster :str  (Friendly string name)
+    - gke_region : str (string region name"""
 
-    cluster = request.form['gke_cluster']
-    region = request.form['gke_region']
+    try:
+        # Validate input:
+        if request.values.get('gke_cluster') and request.values.get('gke_region'):
+            
+            cluster = request.values.get('gke_cluster')
+            region = request.values.get('gke_region')
+            gcp.KillServerInCluster(cluster_name=cluster,region=region)
 
-    result = gcp.KillServerInCluster(cluster_name=cluster,region=region)
+            return json.dumps({'success':True}), 201, {'ContentType':'application/json'} 
+        else:
+            return json.dumps({'success':False,'error':'Missing required fields gke_cluster:str gke_region:str'}), 400, {'ContentType':'application/json'}     
 
-    if result:
-        return json.dumps({'success':True}), 201, {'ContentType':'application/json'} 
-    else:
-        return json.dumps({'success':False}), 400, {'ContentType':'application/json'} 
+    except Exception as e:
+        logger.error("Failed Submit to /v2/remove-from-cluster")
+        logging.error(e)
+
+        return json.dumps({'success':False, 'error':str(e)}), 400, {'ContentType':'application/json'} 
+
 
 ## List Services
 @app.route("/v2/list-services", methods=['GET'])
@@ -166,18 +179,25 @@ def list_services():
 def remove_random_pod():
     """ Remove random pod from service on random machine"""
 
-    service = request.form['service']
+    # Validate form details
+    if request.values.get('service'):
+        # Kill Random Pod
+        result = k8s.kill_random_pod(service_name=request.form['service'])
 
-    result = k8s.kill_random_pod(service_name=service)
+        if result:
+            return json.dumps({'success':True}), 201, {'ContentType':'application/json'} 
+        else:
+            return json.dumps({'success':False}), 400, {'ContentType':'application/json'} 
 
-    if result:
-        return json.dumps({'success':True}), 201, {'ContentType':'application/json'} 
     else:
-        return json.dumps({'success':False}), 400, {'ContentType':'application/json'} 
+        # Missing required value
+        return json.dumps({'success':False,'error':'Missing required fields service:str'}), 400, {'ContentType':'application/json'}   
 
 if __name__ == "__main__":
     ## Setup APP
     gcp.configure_gcp()
+    helpers.Configure_Logging()
     helpers.GetConfig()
+
     ## Run APP
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=config.local_debug)

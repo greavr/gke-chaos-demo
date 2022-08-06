@@ -3,27 +3,27 @@ from kubernetes import client
 from handlers.gcp import gcp
 import config as config
 import datetime
+import logging
 
 ## Quiten TLS notifications
 import urllib3
 urllib3.disable_warnings()
 
 ## Get Kubernetes creds
-def GetKubernetesCreds(location: str, name: str):
-    # Returns Configuration set for Kubernetes Cluster
-    configuration = ""
+def GetKubernetesCreds(location: str, name: str) -> client.Configuration():
+    """ Return Authenticated kubernetes API Client Endpoint"""
+    configuration = client.Configuration()
     cluster_manager_client = gcp.GetGKECreds()
     try:
-        print(f"Getting Credentials for the cluster: {name}, located at: {location}")
+        logging.info(f"Getting Credentials for the cluster: {name}, located at: {location}")
         cluster = cluster_manager_client.get_cluster(name=f'projects/{config.gcp_project}/locations/{location}/clusters/{name}')
         # Build Configuration
         config.credentials.get_access_token()
-        configuration = client.Configuration()
         configuration.host = f"https://{cluster.endpoint}:443"
         configuration.verify_ssl = False
         configuration.api_key = {"authorization": "Bearer " + config.credentials.access_token}
     except Exception as e:
-        print (e)
+       logging.error(e)
 
     return configuration
 
@@ -41,8 +41,8 @@ def flatten_list(_2d_list):
     return flat_list
 
 ## Get GKE Services
-def GetServices(namespace_filter:str, credentials):
-    # Get list of services in namespace
+def GetServices(namespace_filter:str, credentials: client.Configuration()) -> list:
+    """ Generate a list of all services in a specific namespace on a GKE cluster"""
     ## Itterate over clusters
     service_list = []
     client.Configuration.set_default(credentials)
@@ -56,7 +56,7 @@ def GetServices(namespace_filter:str, credentials):
                 #print(aService.metadata.name)
                 service_list.append(aService.metadata.name)
     except Exception as e:
-        print(e)
+        logging.error(e)
 
     return service_list
 
@@ -75,8 +75,8 @@ def GetPods(service: str, cluster_name: str, cluster_location: str,  namespace_f
             pod_results.append({'name':i.metadata.name,'cluster':cluster_name,'zone':cluster_location,'status':i.status.phase})
     
     except Exception as e:
-        print (f"Unable to get the status of the {service} service, in {cluster_name}, {cluster_location}, in the ns {namespace_filter}")
-        print(e)
+        logging.info(f"Unable to get the status of the {service} service, in {cluster_name}, {cluster_location}, in the ns {namespace_filter}")
+        logging.error(e)
 
     # Return results
     return pod_results
@@ -85,10 +85,11 @@ def CreatePodList(namespace: str = "hipster" ):
     # Function to get a list of all pods in all services inside a namespace
 
     # Check cache 
-    elapsed = datetime.datetime.now() - config.PodCacheLastUpdated
-    if ((config.PodCacheList != []) and (elapsed < datetime.timedelta(seconds=config.cachetime))):
-        print (f"Using cache from {config.PodCacheLastUpdated}")
-        return config.PodCacheList
+    if config.PodCacheLastUpdated:
+        elapsed = datetime.datetime.now() - config.PodCacheLastUpdated
+        if ((config.PodCacheList != []) and (elapsed < datetime.timedelta(seconds=config.cachetime))):
+            logging.info(f"Using cache from {config.PodCacheLastUpdated}")
+            return config.PodCacheList
 
     pod_results = []
     ## Itterate over clusters
@@ -117,7 +118,7 @@ def CreatePodList(namespace: str = "hipster" ):
             
 ## Kill Pod
 def KillPod(pod_name, cluster_name, cluster_zone):
-    print(f"Killing Pod: {pod_name}, Cluster: {cluster_name}, Zone: {cluster_zone}")
+    logging.info(f"Killing Pod: {pod_name}, Cluster: {cluster_name}, Zone: {cluster_zone}")
     # Remove Pod
     cluster_manager_client = gcp.GetGKECreds()
     cluster = cluster_manager_client.get_cluster(name=f'projects/{config.gcp_project}/locations/{cluster_zone}/clusters/{cluster_name}')
@@ -133,17 +134,17 @@ def KillPod(pod_name, cluster_name, cluster_zone):
     try:
         v1 = client.CoreV1Api()
         remove_pod = v1.delete_namespaced_pod(pod_name,"hipster")
-        print(remove_pod)
+        logging.info(remove_pod)
         return True
     except Exception as e:
-        print("Exception when calling CoreV1Api->delete_namespaced_pod: %s\n" % e)
+        logging.error("Exception when calling CoreV1Api->delete_namespaced_pod: %s\n" % e)
         return False
 
 ## Get Pod Count
 def Pod_count(service: str, cluster_name: str, cluster_location: str,  namespace_filter: str, credentials):
     """ Function returns a count of pods in that service"""
     # Gather a list of pods in each service in each cluster
-    print(f"Getting pod count for: {service} in the {cluster_name} cluster.")
+    logging.info(f"Getting pod count for: {service} in the {cluster_name} cluster.")
     pod_count = 0
     client.Configuration.set_default(credentials)
     v1 = client.CoreV1Api()
@@ -156,30 +157,33 @@ def Pod_count(service: str, cluster_name: str, cluster_location: str,  namespace
             pod_count += 1
     
     except Exception as e:
-        print (f"Unable to get the status of the {service} service, in {cluster_name}, {cluster_location}, in the ns {namespace_filter}")
-        print(e)
+        logging.error(f"Unable to get the status of the {service} service, in {cluster_name}, {cluster_location}, in the ns {namespace_filter}")
+        logging.error(e)
         pod_count = random.randint(1, 3)
 
     # Return results
     return pod_count
 
 ## Consolidated Service List
-def Create_Service_List(namespace: str = "hipster"):
+def Create_Service_List(namespace: str = "hipster") -> dict:
     """ This function gets a unique list of services in each cluster and counts the pods in each cluster. Returns Dictonary"""
     # Check cache 
-    elapsed = datetime.datetime.now() - config.ServiceListLastUpdated
-    if ((config.ServiceCacheList != []) and (elapsed < datetime.timedelta(seconds=config.cachetime))):
-        print (f"Using cache from {config.ServiceListLastUpdated}")
-        return config.ServiceCacheList
+    if config.ServiceListLastUpdated:
+        elapsed = datetime.datetime.now() - config.ServiceListLastUpdated
+        if ((config.ServiceCacheList != []) and (elapsed < datetime.timedelta(seconds=config.cachetime))):
+            logging.info(f"Using Service Cache From {config.ServiceListLastUpdated}")
+            return config.ServiceCacheList
 
     result = {}
 
     try:
         # Itterate over each server
-        for aCluster in config.ClusterCacheList:
+        for aCluster in gcp.GetClusterList():
             #  Only Scrape GKE Clusters
             if aCluster["cluster-type"] != "gke":
                 continue
+
+            logging.info(f"Getting serivces from cluster: {aCluster}")
 
             cluster_name = aCluster["cluster-name"]
             cluster_location = aCluster["location"]
@@ -191,7 +195,7 @@ def Create_Service_List(namespace: str = "hipster"):
 
             # Get pods in service
             for aService in service_list:
-                # Check for GKE Services we ignore
+                # Check for GKE Services we ignore as these are GKE system services
                 if aService.startswith("gke"):
                     continue
 
@@ -203,7 +207,7 @@ def Create_Service_List(namespace: str = "hipster"):
                     result[aService] = result.get(aService, 0) + pod_count_value
 
     except Exception as e:
-        print(e)
+        logging.error(e)
 
     config.ServiceCacheList = result
     config.ServiceListLastUpdated = datetime.datetime.now()
@@ -216,13 +220,13 @@ def kill_random_pod(service_name, namespace: str = "hipster"):
     """ This function picks a random cluster from the list, and removes a random pod from the corrosponding service"""
 
     result = False
-    #try:
-    # Pick a random cluster
-    randomCluster = random.choice(config.gke_clusters)
-    randomCluster = ["chaos-us-central1", "us-central1"]
+    # try:
+        # Pick a random cluster
+    gke_clusters = filter_list(cluster_list=gcp.GetClusterList())
+    randomCluster = random.choice(gke_clusters)
 
-    cluster_name = randomCluster[0]
-    cluser_loc = randomCluster[1]
+    cluster_name = randomCluster["cluster-name"]
+    cluser_loc = randomCluster["location"]
 
     # Build Kubernetes Creds
     this_client = GetKubernetesCreds(location=cluser_loc,name=cluster_name)
@@ -235,8 +239,20 @@ def kill_random_pod(service_name, namespace: str = "hipster"):
 
     #Kill RandomPod
     result = KillPod(cluster_name=randomPod["cluster"],cluster_zone=randomPod["zone"], pod_name=randomPod["name"])
-    #except Exception as e:
-    #    print(e)
+    # except Exception as e:
+    #     logging.error(e)
 
     # Return restul
+    return result
+
+
+def filter_list(cluster_list: dict, cluster_type: str = "gke") -> dict:
+    """ Return filtered list"""
+    result = []
+
+    for aCluster in cluster_list:
+        logging.debug(f"Working on cluster: {aCluster}")
+        if aCluster["cluster-type"] == cluster_type:
+            result.append(aCluster)
+    logging.debug(f"Results found: {result}")
     return result
