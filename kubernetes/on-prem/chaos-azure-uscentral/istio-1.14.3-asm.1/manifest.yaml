@@ -1,0 +1,9 @@
+asmctlversion: 0.4.0
+dashboards: null
+dependencies:
+  istio:
+    sha: 293b4e488b2b5d8a6bec9fadec5639a4c2fc873a
+docker: gcr.io/gke-release/asm
+dockerOutput: context
+skipGenerateBillOfMaterials: false
+version: 1.14.3-asm.1

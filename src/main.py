@@ -63,19 +63,8 @@ def removeinstance():
 @app.route("/list-pods", methods=['GET'])
 def list_pods():
     # API End Point for get all instances
-    # result = k8s.CreatePodList()
-    result = [
-        {'name':'adservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'cartservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'checkoutservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'currencyservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'emailservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'frontend','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'paymentservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'productcatalogservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'},
-        {'name':'recommendationservice','cluster':'chaos-us-west1','zone':'us-west1-a','status':'ready'}
-        ]
-
+    result = k8s.CreatePodList()
+    #result = k8s.Create_Service_List()
     # Validate result
     if len(result) > 0:
         return json.dumps({'success':True, 'pods':result}), 201, {'ContentType':'application/json'} 
@@ -162,7 +151,6 @@ def remove_from_cluster():
 
         return json.dumps({'success':False, 'error':str(e)}), 400, {'ContentType':'application/json'} 
 
-
 ## List Services
 @app.route("/v2/list-services", methods=['GET'])
 def list_services():
@@ -199,5 +187,9 @@ if __name__ == "__main__":
     helpers.Configure_Logging()
     helpers.GetConfig()
 
+    k8s.buildPodList()
+    gcp.BuildClusterList()
+
     ## Run APP
-    app.run(host='0.0.0.0', port=8080, debug=config.local_debug)
+    print(k8s.CreatePodList())
+    #app.run(host='0.0.0.0', port=8080, debug=config.local_debug)

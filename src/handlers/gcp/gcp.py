@@ -12,21 +12,32 @@ from urllib.parse import urlparse
 import random
 import logging
 
+import threading
+import cachetools.func
+
 
 def configure_gcp():
     # Build Credentials
     config.credentials = GoogleCredentials.get_application_default()
 
 ## List GCE Instances
+@cachetools.func.ttl_cache(maxsize=128, ttl=10)
 def GetInstances():
-    # This Function creates a list of instances per GKE cluster and returns them as a nested array
-    # Check cache 
-    if config.InstanceCacheLastUpdated:
-        elapsed = datetime.datetime.now() - config.InstanceCacheLastUpdated
-        if ((config.InstanceCacheList != []) and (elapsed < datetime.timedelta(seconds=config.cachetime))):
-            logging.info(f"Using cache from {config.InstanceCacheLastUpdated}")
-            return config.InstanceCacheList
+    """ This function controls building the list of instances"""
 
+    if config.InstanceCacheList:
+        x = threading.Thread( target=BuildInstances, args=())
+        x.start
+    else:
+        # First time
+        logging.debug("First Time Building GCE List")
+        BuildInstances()
+
+    return config.InstanceCacheList
+
+def BuildInstances():
+    # This Function creates a list of instances per GKE cluster and returns them as a nested array
+    logging.debug("Building GCE List")
     # Build Client
     all_instances = []
     try:
@@ -50,19 +61,24 @@ def GetInstances():
     except Exception as e:
         logging.error(e)
 
-    return all_instances
-
 ## List Anthos GKE Clusters
+@cachetools.func.ttl_cache(maxsize=128, ttl=10)
 def GetClusterList() -> dict:
-    """Return list of kubernetes clusters registered in Anthos. Returns Array of cluster and instances"""
-    # Check Cache result
-    if config.ClusterCacheLastUpdated:
-        elapsed = datetime.datetime.now() - config.ClusterCacheLastUpdated
-        if ((config.ClusterCacheLastUpdated != []) and (elapsed < datetime.timedelta(seconds=config.cachetime))):
-            logging.info(f"Using Cluster cache from {config.ClusterCacheLastUpdated}")
-            return config.ClusterCacheList
+    """ This function returns list of gke clusters"""
+    if config.ClusterCacheList:
+        x = threading.Thread( target=BuildClusterList, args=())
+        x.start
+    else:
+        # First time
+        logging.debug("First Time Building GKE Cluster List")
+        BuildClusterList()
 
+    return config.ClusterCacheList
+
+def BuildClusterList() -> dict:
+    """Return list of kubernetes clusters registered in Anthos. Returns Array of cluster and instances"""
     # Build Client
+    logging.debug("Building GKE Cluster List")
     all_clusters = []
     try:
          # Create a client
@@ -100,8 +116,6 @@ def GetClusterList() -> dict:
         config.ClusterCacheLastUpdated = datetime.datetime.now()
     except Exception as e:
         logging.error(e)
-
-    return all_clusters
 
 ## Kill GCE Instance
 def KillInstance(instance_name: str, instance_zone: str ) -> bool:

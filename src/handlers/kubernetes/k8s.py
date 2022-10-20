@@ -1,5 +1,9 @@
 import random
 from kubernetes import client
+import cachetools.func
+
+import threading
+
 from handlers.gcp import gcp
 import config as config
 import datetime
@@ -81,21 +85,29 @@ def GetPods(service: str, cluster_name: str, cluster_location: str,  namespace_f
     # Return results
     return pod_results
 
+@cachetools.func.ttl_cache(maxsize=128, ttl=10)
 def CreatePodList(namespace: str = "hipster" ):
+    """ This function returns pod list"""
+    if config.PodCacheList:
+        logging.debug("Using Pod Cache")
+        x = threading.Thread( target=buildPodList, args=(namespace))
+        x.start
+    else:
+        # First time
+        logging.debug("First time build pod list")
+        buildPodList(namespace=namespace)
+
+    return config.PodCacheList
+
+def buildPodList(namespace: str = "hipster"):
     # Function to get a list of all pods in all services inside a namespace
-
-    # Check cache 
-    if config.PodCacheLastUpdated:
-        elapsed = datetime.datetime.now() - config.PodCacheLastUpdated
-        if ((config.PodCacheList != []) and (elapsed < datetime.timedelta(seconds=config.cachetime))):
-            logging.info(f"Using cache from {config.PodCacheLastUpdated}")
-            return config.PodCacheList
-
+    logging.debug("Building Pod List")
     pod_results = []
     ## Itterate over clusters
-    for aCluster in config.gke_clusters:
-        cluster_name = aCluster[0]
-        cluster_location = aCluster[1]
+    this_cluster_list = gcp.GetClusterList()
+    for aCluster in this_cluster_list:
+        cluster_name = aCluster["cluster-name"]
+        cluster_location = aCluster["location"]
         # print(f"Cluster: {cluster_name}, located: {cluster_location}")
 
         this_client = GetKubernetesCreds(location=cluster_location,name=cluster_name)
@@ -113,9 +125,6 @@ def CreatePodList(namespace: str = "hipster" ):
     config.PodCacheList = pod_results
     config.PodCacheLastUpdated = datetime.datetime.now()
 
-    # Return results
-    return pod_results
-            
 ## Kill Pod
 def KillPod(pod_name, cluster_name, cluster_zone):
     logging.info(f"Killing Pod: {pod_name}, Cluster: {cluster_name}, Zone: {cluster_zone}")
@@ -165,16 +174,23 @@ def Pod_count(service: str, cluster_name: str, cluster_location: str,  namespace
     return pod_count
 
 ## Consolidated Service List
+@cachetools.func.ttl_cache(maxsize=128, ttl=10)
 def Create_Service_List(namespace: str = "hipster") -> dict:
     """ This function gets a unique list of services in each cluster and counts the pods in each cluster. Returns Dictonary"""
-    # Check cache 
-    if config.ServiceListLastUpdated:
-        elapsed = datetime.datetime.now() - config.ServiceListLastUpdated
-        if ((config.ServiceCacheList != []) and (elapsed < datetime.timedelta(seconds=config.cachetime))):
-            logging.info(f"Using Service Cache From {config.ServiceListLastUpdated}")
-            return config.ServiceCacheList
+    if config.ServiceCacheList:
+        logging.debug("Using Service service List")
+        x = threading.Thread( target=build_service_list, args=(namespace))
+        x.start
+    else:
+        # First time
+        logging.debug("First time build service list")
+        build_service_list(namespace=namespace)
 
+    return config.ServiceCacheList
+
+def build_service_list(namespace: str = "hipster"):
     result = {}
+    logging.debug("Building service list")
 
     try:
         # Itterate over each server
@@ -244,7 +260,6 @@ def kill_random_pod(service_name, namespace: str = "hipster"):
 
     # Return restul
     return result
-
 
 def filter_list(cluster_list: dict, cluster_type: str = "gke") -> dict:
     """ Return filtered list"""
