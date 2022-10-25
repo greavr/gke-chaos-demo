@@ -191,5 +191,4 @@ if __name__ == "__main__":
     gcp.BuildClusterList()
 
     ## Run APP
-    print(k8s.CreatePodList())
-    #app.run(host='0.0.0.0', port=8080, debug=config.local_debug)
+    app.run(host='0.0.0.0', port=8080, debug=config.local_debug)
