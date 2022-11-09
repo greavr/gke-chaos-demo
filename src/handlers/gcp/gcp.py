@@ -21,7 +21,7 @@ def configure_gcp():
     config.credentials = GoogleCredentials.get_application_default()
 
 ## List GCE Instances
-@cachetools.func.ttl_cache(maxsize=128, ttl=10)
+@cachetools.func.ttl_cache(maxsize=128, ttl=1)
 def GetInstances():
     """ This function controls building the list of instances"""
 
@@ -62,7 +62,7 @@ def BuildInstances():
         logging.error(e)
 
 ## List Anthos GKE Clusters
-@cachetools.func.ttl_cache(maxsize=128, ttl=10)
+@cachetools.func.ttl_cache(maxsize=128, ttl=1)
 def GetClusterList() -> dict:
     """ This function returns list of gke clusters"""
     if config.ClusterCacheList:

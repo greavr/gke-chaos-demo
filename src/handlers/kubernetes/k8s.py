@@ -85,7 +85,7 @@ def GetPods(service: str, cluster_name: str, cluster_location: str,  namespace_f
     # Return results
     return pod_results
 
-@cachetools.func.ttl_cache(maxsize=128, ttl=10)
+@cachetools.func.ttl_cache(maxsize=128, ttl=1)
 def CreatePodList(namespace: str = "hipster" ):
     """ This function returns pod list"""
     if config.PodCacheList:
@@ -142,8 +142,8 @@ def KillPod(pod_name, cluster_name, cluster_zone):
     # Get Pods
     try:
         v1 = client.CoreV1Api()
-        remove_pod = v1.delete_namespaced_pod(pod_name,"hipster")
-        logging.info(remove_pod)
+        remove_pod = v1.delete_namespaced_pod(name=pod_name,namespace="hipster")
+        #logging.info(remove_pod)
         return True
     except Exception as e:
         logging.error("Exception when calling CoreV1Api->delete_namespaced_pod: %s\n" % e)
@@ -174,7 +174,7 @@ def Pod_count(service: str, cluster_name: str, cluster_location: str,  namespace
     return pod_count
 
 ## Consolidated Service List
-@cachetools.func.ttl_cache(maxsize=128, ttl=10)
+@cachetools.func.ttl_cache(maxsize=128, ttl=1)
 def Create_Service_List(namespace: str = "hipster") -> dict:
     """ This function gets a unique list of services in each cluster and counts the pods in each cluster. Returns Dictonary"""
     if config.ServiceCacheList:
