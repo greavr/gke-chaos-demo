@@ -137,7 +137,7 @@ def remove_from_cluster():
         # Validate input:
         if request.values.get('gke_cluster') and request.values.get('gke_region'):
             
-            cluster = request.values.get('gke_cluster')
+            cluster = request.values.get('gke_cluster').replace("_","-")
             region = request.values.get('gke_region')
             gcp.KillServerInCluster(cluster_name=cluster,region=region)
 

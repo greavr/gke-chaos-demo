@@ -128,15 +128,9 @@ def buildPodList(namespace: str = "hipster"):
 ## Kill Pod
 def KillPod(pod_name, cluster_name, cluster_zone):
     logging.info(f"Killing Pod: {pod_name}, Cluster: {cluster_name}, Zone: {cluster_zone}")
-    # Remove Pod
-    cluster_manager_client = gcp.GetGKECreds()
-    cluster = cluster_manager_client.get_cluster(name=f'projects/{config.gcp_project}/locations/{cluster_zone}/clusters/{cluster_name}')
 
     # Build Configuration
-    configuration = client.Configuration()
-    configuration.host = f"https://{cluster.endpoint}:443"
-    configuration.verify_ssl = False
-    configuration.api_key = {"authorization": "Bearer " + config.credentials.access_token}
+    configuration = GetKubernetesCreds(location=cluster_zone,name=cluster_name)
     client.Configuration.set_default(configuration)
 
     # Get Pods

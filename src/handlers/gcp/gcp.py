@@ -97,11 +97,11 @@ def BuildClusterList() -> dict:
     
             # Check if gke cluster
             if response.endpoint.gke_cluster.resource_link:
-                cluster_name = response.endpoint.gke_cluster.resource_link.split("/")[-1]
+                cluster_name = response.endpoint.gke_cluster.resource_link.split("/")[-1].replace("-","_")
                 cluster_location = response.endpoint.gke_cluster.resource_link.split("/")[-3]
                 cluster_type = "gke"
             else:
-                cluster_name = response.name.split("/")[-1]
+                cluster_name = response.name.split("/")[-1].replace("-","_")
                 cluster_location = response.name.split("/")[-3]
                 cluster_type = response.endpoint.kubernetes_metadata.node_provider_id
 
