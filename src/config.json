@@ -1,0 +1,11 @@
+{
+    "project" : "rgreaves-gke-chaos",
+    "gke-clusters" : [
+        ["chaos-us-west4", "us-west4"],
+        ["chaos-us-east1", "us-east1"]
+    ],
+    "dashboard-url" : "https://console.cloud.google.com/monitoring/dashboards/builder/fede45bd-5d75-43ac-994c-dcefa25396ad?dashboardBuilderState=%257B%2522editModeEnabled%2522:false%257D&organizationId=599669849801&project=rgreaves-gke-chaos&timeDomain=1h&output=embed",
+    "site-urls" : ["https://global.demo.therickstuff.com/","https://global.demo.therickstuff.com//product/66VCHSJNUP","https://global.demo.therickstuff.com//cart", "https://global.demo.therickstuff.com/cart","https://global.demo.therickstuff.com/product/6E92ZMYYFZ", "https://global.demo.therickstuff.com/product/LS4PSXUNUM"],
+    "load-test-url" : "https://global.demo.therickstuff.com/",
+    "load-test-user-bump" : 500
+}
