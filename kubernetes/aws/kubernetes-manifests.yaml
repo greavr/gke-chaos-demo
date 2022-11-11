@@ -776,3 +776,17 @@ spec:
   - name: grpc
     port: 9555
     targetPort: 9555
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend-hpa
+  namespace: hipster
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 10
